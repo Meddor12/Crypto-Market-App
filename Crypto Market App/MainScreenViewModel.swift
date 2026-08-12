@@ -22,6 +22,8 @@ class MainScreenViewModel {
         return URL(string: urlString)
     }
     
+    private(set) var itemCount: Int = 0
+    
     func fetchData(completion: @escaping (ViewState) -> Void) {
         DispatchQueue.main.async { completion(.loading) }
         
@@ -57,6 +59,7 @@ class MainScreenViewModel {
                     print("Данные получены успешно")
                     
                     DispatchQueue.main.async {
+                        self.itemCount = coins.count
                         print("Coins loaded: \(coins.count)")
                         completion(.loaded(coins))
                     }

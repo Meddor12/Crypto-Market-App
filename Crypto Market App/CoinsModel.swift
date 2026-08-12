@@ -8,14 +8,14 @@
 import Foundation
 
 struct Coin: Codable, Identifiable {
-    let id: String
-    let symbol: String
-    let name: String
-    let image: String
-    let currentPrice: Double
-    let marketCap: Double?
-    let marketCapRank: Int?
-    let priceChangePercentage24h: Double?
+    var id: String
+    var symbol: String
+    var name: String
+    var image: String
+    var currentPrice: Double
+    var marketCap: Double?
+    var marketCapRank: Int?
+    var priceChangePercentage24h: Double?
 
     enum CodingKeys: String, CodingKey {
         case id, symbol, name, image
