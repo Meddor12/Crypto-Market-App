@@ -6,14 +6,26 @@
 //
 
 import UIKit
+import Combine
+
 
 class ViewController: UIViewController {
 
+    let viewModel = MainScreenViewModel()
+    
+    private var cancellables: Set<AnyCancellable> = []
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
+        
+        viewModel.fetchData { viewState in
+            switch viewState {
+            case .idle: print("idle")
+            case .error(let error): print("error: \(error)")
+            case .loading: print("loading")
+            case .loaded(let coinList): print("loaded: \(coinList)")
+            }
+        }
     }
 
-
 }
-
