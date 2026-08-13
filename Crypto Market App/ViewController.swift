@@ -22,8 +22,6 @@ class ViewController: UIViewController {
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
-    
-    private var cancellables: Set<AnyCancellable> = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -54,6 +52,7 @@ class ViewController: UIViewController {
             ])
 
             tableView.dataSource = self
+        tableView.delegate = self
         }
 
 }
@@ -76,5 +75,15 @@ extension ViewController: UITableViewDataSource {
 
         return cell
         
+    }
+}
+
+extension ViewController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let item = coins[indexPath.row]
+        print(item)
+        let detailVC = DetailViewController()
+        
+        navigationController?.pushViewController(detailVC, animated: true)
     }
 }
