@@ -25,28 +25,28 @@ class TableViewCell: UITableViewCell {
     private var name: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "BTC"
+        
         return label
     }()
     
     private var symbol: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "BTC"
+        
         return label
     }()
     
     private var price: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "64 320 50"
+        
         return label
     }()
     
     private var priceChange: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "+ 1.24%"
+        
         return label
     }()
     
@@ -87,10 +87,7 @@ class TableViewCell: UITableViewCell {
             price.rightAnchor.constraint(equalTo: contentView.rightAnchor, constant: -12),
             
             priceChange.topAnchor.constraint(equalTo: price.bottomAnchor, constant: 12),
-            priceChange.rightAnchor.constraint(equalTo: contentView.rightAnchor, constant: -12)
-            
-            
-            
+            priceChange.rightAnchor.constraint(equalTo: contentView.rightAnchor, constant: -12)  
         ])
     }
     
@@ -109,57 +106,11 @@ class TableViewCell: UITableViewCell {
         
         imageCoin.image = nil
         
-        if let cashedImage = ImageCash.shared.image(for: model.image) {
-            imageCoin.image = cashedImage
-            return
-        }
-        guard let url = URL(string: model.image) else {
-            return
-        }
         
-        URLSession.shared.dataTask(with: url) { data, _, _ in
-            guard let data = data,
-                  let image = UIImage(data: data) else {
-                return
-            }
-            ImageCash.shared.setImage(image, for: model.image)
-            
-            DispatchQueue.main.async {
-                self.imageCoin.image = image
-            }
-            
-        }.resume()
-        //downloadImage(from: model.image)
-    }
-    
-//    private func downloadImage(from url: String) {
-//        guard let url = URL(string: url) else { return }
-//        
-//        let request = URLRequest(url: url)
-//        
-//        DispatchQueue.global(qos: .utility).async {
-//            URLSession.shared.dataTask(with: request) { data, _, _ in
-//                guard let data = data, let image = UIImage(data: data) else { return }
-//                
-//                DispatchQueue.main.async { self.imageCoin.image = image }
-//                
-//            }.resume()
-//        }
-//    }
-    
-    final class ImageCash {
-        
-        static let shared = ImageCash()
-        
-        private let cash = NSCache<NSString, UIImage>()
-        
-        private init() {}
-        
-        func image(for url: String) -> UIImage? {
-            cash.object(forKey: url as NSString)
-        }
-        func setImage(_ image: UIImage, for url: String) {
-            cash.setObject(image, forKey: url as NSString)
+        ImageLoader.shared.loadImage(
+            from: model.image
+        ) { [weak self] image in
+            self?.imageCoin.image = image
         }
     }
 }

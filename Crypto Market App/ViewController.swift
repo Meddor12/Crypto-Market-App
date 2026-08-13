@@ -18,14 +18,8 @@ class ViewController: UIViewController {
 
     private lazy var tableView: UITableView = {
         let view = UITableView()
-        
-        view.register(
-            TableViewCell.self,
-            forCellReuseIdentifier: TableViewCell.reuseIdentifier
-        )
-        
+        view.register(TableViewCell.self, forCellReuseIdentifier: TableViewCell.reuseIdentifier)
         view.translatesAutoresizingMaskIntoConstraints = false
-        
         return view
     }()
     
