@@ -21,7 +21,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let window = UIWindow(windowScene: windowScene)
         let controller = ViewController()
         let navigationController = UINavigationController(rootViewController: controller)
-        controller.title = "qwerty"
+        controller.title = "Топ 100 монет"
         window.rootViewController = navigationController
         window.makeKeyAndVisible()
         self.window = window

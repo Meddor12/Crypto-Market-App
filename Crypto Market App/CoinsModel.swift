@@ -25,3 +25,24 @@ struct Coin: Codable, Identifiable {
         case priceChangePercentage24h = "price_change_percentage_24h"
     }
 }
+
+extension Double {
+    var abbreviated: String {
+        switch self {
+        case 1_000_000_000_000...:
+            return String(format: "%.2fT", self / 1_000_000_000_000)
+
+        case 1_000_000_000...:
+            return String(format: "%.2fB", self / 1_000_000_000)
+
+        case 1_000_000...:
+            return String(format: "%.2fM", self / 1_000_000)
+
+        case 1_000...:
+            return String(format: "%.2fK", self / 1_000)
+
+        default:
+            return String(format: "%.2f", self)
+        }
+    }
+}

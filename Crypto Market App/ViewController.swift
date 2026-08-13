@@ -42,6 +42,10 @@ class ViewController: UIViewController {
     }
     
     private func setupTableView() {
+        
+            view.backgroundColor = .white
+          navigationController?.navigationBar.backgroundColor = .white
+        
             view.addSubview(tableView)
 
             NSLayoutConstraint.activate([
@@ -82,7 +86,7 @@ extension ViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let item = coins[indexPath.row]
         print(item)
-        let detailVC = DetailViewController()
+        let detailVC = DetailViewController(coin: item)
         
         navigationController?.pushViewController(detailVC, animated: true)
     }
