@@ -101,5 +101,7 @@ class TableViewCell: UITableViewCell {
         symbol.text = model.symbol
         price.text = "\(model.currentPrice)"
         priceChange.text = "\(model.priceChangePercentage24h ?? 0)"
+        
+        priceChange.textColor = (model.priceChangePercentage24h ?? 0) >= 0 ? .systemGreen : .systemRed
     }
 }
