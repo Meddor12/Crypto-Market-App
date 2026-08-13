@@ -10,82 +10,93 @@ import Combine
 
 
 class ViewController: UIViewController {
-
-
-    let viewModel = MainScreenViewModel()
     
+    
+    let viewModel = MainScreenViewModel()
+    private let refreshControl = UIRefreshControl()
     private var coins: [Coin] = []
     
-    private let refreshControl = UIRefreshControl()
-
+    
     private lazy var tableView: UITableView = {
         let view = UITableView()
         view.register(TableViewCell.self, forCellReuseIdentifier: TableViewCell.reuseIdentifier)
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         setupTableView()
-
         setupRefreshControl()
-
-        viewModel.fetchData { viewState in
-            switch viewState {
-            case .idle: print("idle")
-            case .error(let error): print("error: \(error)")
-            case .loading: print("loading")
-            case .loaded(let coinList):
-                self.coins = coinList
-                print("loaded: \(coinList)")
-                self.tableView.reloadData()
-            }
+        loadFirstPage()
+    }
+    
+    private func loadFirstPage() {
+        viewModel.fetchNextPage { [weak self] viewState in
+            self?.handle(viewState, isFirstPage: true)
         }
     }
+    private func loadNextPage() {
+        viewModel.fetchNextPage { [weak self] viewState in
+            self?.handle(viewState, isFirstPage: false)
+        }
+    }
+    
     private func setupRefreshControl() {
         refreshControl.addTarget(
             self,
             action: #selector(refreshData),
             for: .valueChanged
         )
-
+        
         tableView.refreshControl = refreshControl
     }
     @objc private func refreshData() {
-        viewModel.fetchData { viewState in
-            switch viewState {
-            case .idle: print("idle")
-            case .error(let error): print("error: \(error)")
-            case .loading: print("loading")
-            case .loaded(let coinList):
-                self.coins = coinList
-                print("loaded: \(coinList)")
-                self.tableView.reloadData()
-                self.refreshControl.endRefreshing()
+        viewModel.reset()
+        coins = []
+        viewModel.fetchNextPage { [weak self] viewState in
+            self?.handle(viewState, isFirstPage: true)
+            if case .loaded = viewState {
+                self?.refreshControl.endRefreshing()
+            }
+        }
+    }
+    private func handle(_ viewState: ViewState, isFirstPage: Bool) {
+        switch viewState {
+        case .idle: print("idle")
+        case .error(let error): print("error: \(error)")
+        case .loading: print("loading")
+        case .loaded(let newCoins):
+            let startIndex = coins.count
+            coins.append(contentsOf: newCoins)
+            
+            if isFirstPage {
+                tableView.reloadData()
+            } else {
+                let indexPaths = (startIndex..<coins.count).map { IndexPath(row: $0, section: 0) }
+                tableView.insertRows(at: indexPaths, with: .none)
             }
         }
     }
     
     private func setupTableView() {
         
-            view.backgroundColor = .white
-          navigationController?.navigationBar.backgroundColor = .white
+        view.backgroundColor = .white
+        navigationController?.navigationBar.backgroundColor = .white
         
-            view.addSubview(tableView)
-
-            NSLayoutConstraint.activate([
-                tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-                tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-                tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-                tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-            ])
-
-            tableView.dataSource = self
+        view.addSubview(tableView)
+        
+        NSLayoutConstraint.activate([
+            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        
+        tableView.dataSource = self
         tableView.delegate = self
-        }
-
+    }
+    
 }
 
 
@@ -103,10 +114,16 @@ extension ViewController: UITableViewDataSource {
         
         let coin = coins[indexPath.row]
         cell.configure(model: coin)
-
+        
         return cell
         
     }
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+            let threshold = coins.count - 5 // подгружаем чуть заранее, а не в последней строке
+            if indexPath.row >= threshold {
+                loadNextPage()
+            }
+        }
 }
 
 extension ViewController: UITableViewDelegate {
