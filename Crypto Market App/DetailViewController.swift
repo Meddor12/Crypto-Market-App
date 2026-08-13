@@ -81,6 +81,7 @@ class DetailViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        view.backgroundColor = .white
         setupConstrates()
         
         ImageLoader.shared.loadImage(from: coin.image) { [weak self] image in
@@ -90,8 +91,8 @@ class DetailViewController: UIViewController {
         symbol.text = coin.symbol
         price.text = "$ \(coin.currentPrice)"
         priceChange.text = "\(coin.priceChangePercentage24h, default: "")"
-        marketCup.text = "\(coin.marketCap, default: "")"
-        
+        priceChange.textColor = (coin.priceChangePercentage24h ?? 0) >= 0 ? .systemGreen : .systemRed
+
         backroundView.set(titleText: "$\(coin.marketCap?.abbreviated, default: "")")
     }
     
@@ -101,7 +102,6 @@ class DetailViewController: UIViewController {
         view.addSubview(symbol)
         view.addSubview(price)
         view.addSubview(priceChange)
-        //view.addSubview(marketCup)
         view.addSubview(backroundView)
         
         NSLayoutConstraint.activate([

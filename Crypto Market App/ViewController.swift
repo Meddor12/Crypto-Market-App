@@ -15,6 +15,8 @@ class ViewController: UIViewController {
     let viewModel = MainScreenViewModel()
     
     private var coins: [Coin] = []
+    
+    private let refreshControl = UIRefreshControl()
 
     private lazy var tableView: UITableView = {
         let view = UITableView()
@@ -28,6 +30,8 @@ class ViewController: UIViewController {
         
         setupTableView()
 
+        setupRefreshControl()
+
         viewModel.fetchData { viewState in
             switch viewState {
             case .idle: print("idle")
@@ -37,6 +41,29 @@ class ViewController: UIViewController {
                 self.coins = coinList
                 print("loaded: \(coinList)")
                 self.tableView.reloadData()
+            }
+        }
+    }
+    private func setupRefreshControl() {
+        refreshControl.addTarget(
+            self,
+            action: #selector(refreshData),
+            for: .valueChanged
+        )
+
+        tableView.refreshControl = refreshControl
+    }
+    @objc private func refreshData() {
+        viewModel.fetchData { viewState in
+            switch viewState {
+            case .idle: print("idle")
+            case .error(let error): print("error: \(error)")
+            case .loading: print("loading")
+            case .loaded(let coinList):
+                self.coins = coinList
+                print("loaded: \(coinList)")
+                self.tableView.reloadData()
+                self.refreshControl.endRefreshing()
             }
         }
     }
