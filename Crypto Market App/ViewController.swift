@@ -17,10 +17,22 @@ class ViewController: UIViewController {
     private var coins: [Coin] = []
     
     
+    private let footerLabel: UILabel = {
+           let label = UILabel()
+           label.textAlignment = .center
+           label.font = .systemFont(ofSize: 14)
+           label.numberOfLines = 2
+           label.isUserInteractionEnabled = true
+           label.frame = CGRect(x: 0, y: 0, width: 0, height: 50)
+           return label
+       }()
+    
     private lazy var tableView: UITableView = {
         let view = UITableView()
         view.register(TableViewCell.self, forCellReuseIdentifier: TableViewCell.reuseIdentifier)
         view.translatesAutoresizingMaskIntoConstraints = false
+        view.tableFooterView = footerLabel   // ← этого не хватает
+
         return view
     }()
     
@@ -28,9 +40,42 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         setupTableView()
         setupRefreshControl()
+        
+        let tap = UITapGestureRecognizer(target: self, action: #selector(retryTapped))
+                footerLabel.addGestureRecognizer(tap)
+        
         loadFirstPage()
     }
+    @objc private func retryTapped() {
+            loadNextPage()
+        }
     
+    private func handle(_ viewState: ViewState, isFirstPage: Bool) {
+           switch viewState {
+           case .idle:
+               break
+               
+           case .loading:
+               footerLabel.text = "Загрузка..."
+               footerLabel.textColor = .secondaryLabel
+               
+           case .error(let message):
+               footerLabel.text = "\(message)\n(нажми, чтобы повторить)"
+               footerLabel.textColor = .systemRed
+               
+           case .loaded(let newCoins):
+               footerLabel.text = nil
+               let startIndex = coins.count
+               coins.append(contentsOf: newCoins)
+               
+               if isFirstPage {
+                   tableView.reloadData()
+               } else {
+                   let indexPaths = (startIndex..<coins.count).map { IndexPath(row: $0, section: 0) }
+                   tableView.insertRows(at: indexPaths, with: .none)
+               }
+           }
+       }
     private func loadFirstPage() {
         viewModel.fetchNextPage { [weak self] viewState in
             self?.handle(viewState, isFirstPage: true)
@@ -62,23 +107,23 @@ class ViewController: UIViewController {
             }
         }
     }
-    private func handle(_ viewState: ViewState, isFirstPage: Bool) {
-        switch viewState {
-        case .idle: print("idle")
-        case .error(let error): print("error: \(error)")
-        case .loading: print("loading")
-        case .loaded(let newCoins):
-            let startIndex = coins.count
-            coins.append(contentsOf: newCoins)
-            
-            if isFirstPage {
-                tableView.reloadData()
-            } else {
-                let indexPaths = (startIndex..<coins.count).map { IndexPath(row: $0, section: 0) }
-                tableView.insertRows(at: indexPaths, with: .none)
-            }
-        }
-    }
+//    private func handle(_ viewState: ViewState, isFirstPage: Bool) {
+//        switch viewState {
+//        case .idle: print("idle")
+//        case .error(let error): print("error: \(error)")
+//        case .loading: print("loading")
+//        case .loaded(let newCoins):
+//            let startIndex = coins.count
+//            coins.append(contentsOf: newCoins)
+//            
+//            if isFirstPage {
+//                tableView.reloadData()
+//            } else {
+//                let indexPaths = (startIndex..<coins.count).map { IndexPath(row: $0, section: 0) }
+//                tableView.insertRows(at: indexPaths, with: .none)
+//            }
+//        }
+//    }
     
     private func setupTableView() {
         
