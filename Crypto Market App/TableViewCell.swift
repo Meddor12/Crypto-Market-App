@@ -15,7 +15,10 @@ class TableViewCell: UITableViewCell {
         let view = UIImageView()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.contentMode = .scaleAspectFit
-        view.image = UIImage(named: "btc")
+        view.image = UIImage(systemName: "photo.artframe.circle.fill")
+        view.layer.cornerRadius = 27
+        view.clipsToBounds = true
+        
         return view
     }()
     
@@ -103,5 +106,22 @@ class TableViewCell: UITableViewCell {
         priceChange.text = "\(model.priceChangePercentage24h ?? 0)"
         
         priceChange.textColor = (model.priceChangePercentage24h ?? 0) >= 0 ? .systemGreen : .systemRed
+        
+        downloadImage(from: model.image)
+    }
+    
+    private func downloadImage(from url: String) {
+        guard let url = URL(string: url) else { return }
+        
+        let request = URLRequest(url: url)
+        
+        DispatchQueue.global(qos: .utility).async {
+            URLSession.shared.dataTask(with: request) { data, _, _ in
+                guard let data = data, let image = UIImage(data: data) else { return }
+                
+                DispatchQueue.main.async { self.imageCoin.image = image }
+                
+            }.resume()
+        }
     }
 }
