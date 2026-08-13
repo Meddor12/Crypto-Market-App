@@ -17,18 +17,21 @@ enum ViewState {
 
 class MainScreenViewModel {
     
-    private let perPage = 50
+    private let perPage = 100
     private(set) var currentPage = 1
     private(set) var isLoading = false
     private(set) var canLoadMore = true
+    private var currentTask: URLSessionDataTask?
     
     func makeCoinsMarketsURL(page: Int) -> URL? {
         let urlString = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=\(perPage)&page=\(page)"
         return URL(string: urlString)
     }
     
-    // reset — вызываем при pull-to-refresh
     func reset() {
+        currentTask?.cancel()   // отменяем "зависший" старый запрос
+        currentTask = nil
+        isLoading = false
         currentPage = 1
         canLoadMore = true
     }
@@ -37,45 +40,52 @@ class MainScreenViewModel {
         guard !isLoading, canLoadMore else { return }
         
         isLoading = true
-        DispatchQueue.main.async { completion(.loading) }
+        completion(.loading)
         
-        DispatchQueue.global(qos: .userInitiated).async {
-            guard let url = self.makeCoinsMarketsURL(page: self.currentPage) else {
-                self.isLoading = false
-                DispatchQueue.main.async { completion(.error("Invalid URL")) }
-                return
-            }
-            
-            URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+        guard let url = makeCoinsMarketsURL(page: currentPage) else {
+            isLoading = false
+            completion(.error("Invalid URL"))
+            return
+        }
+        
+        let task = URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            // сразу прыгаем на главный поток — ВСЯ работа с state и completion только тут
+            DispatchQueue.main.async {
                 guard let self else { return }
-                
-                defer { self.isLoading = false }
+                self.isLoading = false
                 
                 if let error = error {
-                    DispatchQueue.main.async { completion(.error("Ошибка получения данных \(error)")) }
+                    // если это отмена (reset вызвал cancel) — просто выходим молча
+                    if (error as NSError).code == NSURLErrorCancelled { return }
+                    completion(.error("Ошибка получения данных \(error)"))
+                    return
+                }
+                
+                if let httpResponse = response as? HTTPURLResponse,
+                   !(200...299).contains(httpResponse.statusCode) {
+                    completion(.error("Сервер вернул код \(httpResponse.statusCode) — похоже на rate limit"))
                     return
                 }
                 
                 guard let data = data else {
-                    DispatchQueue.main.async { completion(.error("Данные отсутствуют")) }
+                    completion(.error("Данные отсутствуют"))
                     return
                 }
                 
                 do {
                     let coins = try JSONDecoder().decode([Coin].self, from: data)
-                    
                     if coins.count < self.perPage {
                         self.canLoadMore = false
                     }
                     self.currentPage += 1
-                    
-                    DispatchQueue.main.async {
-                        completion(.loaded(coins))
-                    }
+                    completion(.loaded(coins))
                 } catch {
-                    DispatchQueue.main.async { completion(.error("Ошибка декодирования данных \(error)")) }
+                    completion(.error("Ошибка декодирования данных \(error)"))
                 }
-            }.resume()
+            }
         }
+        
+        currentTask = task
+        task.resume()
     }
 }

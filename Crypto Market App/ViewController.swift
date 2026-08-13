@@ -54,6 +54,7 @@ class ViewController: UIViewController {
     @objc private func refreshData() {
         viewModel.reset()
         coins = []
+        tableView.reloadData()   // ← синхронизируем datasource и UI сразу же
         viewModel.fetchNextPage { [weak self] viewState in
             self?.handle(viewState, isFirstPage: true)
             if case .loaded = viewState {
@@ -128,8 +129,8 @@ extension ViewController: UITableViewDataSource {
 
 extension ViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
         let item = coins[indexPath.row]
-        print(item)
         let detailVC = DetailViewController(coin: item)
         
         navigationController?.pushViewController(detailVC, animated: true)

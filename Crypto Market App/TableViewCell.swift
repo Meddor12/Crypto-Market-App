@@ -18,14 +18,15 @@ class TableViewCell: UITableViewCell {
         view.image = UIImage(systemName: "photo.artframe.circle.fill")
         view.layer.cornerRadius = 27
         view.clipsToBounds = true
-        
         return view
     }()
     
     private var name: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        
+        label.font = UIFont(name: "HelveticaNeue-Bold", size: 18)
+        label.numberOfLines = 1 // Ограничиваем одной строкой
+        label.lineBreakMode = .byTruncatingTail // Добавляет "
         return label
     }()
     
@@ -33,12 +34,15 @@ class TableViewCell: UITableViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         
+        
         return label
     }()
     
     private var price: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = UIFont(name: "HelveticaNeue-Bold", size: 18)
+
         
         return label
     }()
@@ -79,6 +83,7 @@ class TableViewCell: UITableViewCell {
             
             name.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
             name.leftAnchor.constraint(equalTo: imageCoin.rightAnchor, constant: 12),
+            name.rightAnchor.constraint(equalTo: price.leftAnchor, constant: -32),
             
             symbol.topAnchor.constraint(equalTo: name.bottomAnchor, constant: 12),
             symbol.leftAnchor.constraint(equalTo: imageCoin.rightAnchor, constant: 12),
@@ -94,13 +99,23 @@ class TableViewCell: UITableViewCell {
     private func setupCell() {
         addingSubviews()
         setupConstraints()
+        setupPriorities()
+    }
+    
+    private func setupPriorities() {
+        // price никогда не должен ужиматься — цифры важнее
+        price.setContentCompressionResistancePriority(.required, for: .horizontal)
+        price.setContentHuggingPriority(.required, for: .horizontal)
+        
+        // name отдаёт место первым и обрезается многоточием
+        name.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
     }
     
     func configure(model: Coin) {
         name.text = model.name
         symbol.text = model.symbol
-        price.text = "\(model.currentPrice)"
-        priceChange.text = "\(model.priceChangePercentage24h ?? 0)"
+        price.text = "$\(model.currentPrice)"
+        priceChange.text = "\(model.priceChangePercentage24h ?? 0)%"
         
         priceChange.textColor = (model.priceChangePercentage24h ?? 0) >= 0 ? .systemGreen : .systemRed
         
