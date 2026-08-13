@@ -107,29 +107,8 @@ class ViewController: UIViewController {
             }
         }
     }
-//    private func handle(_ viewState: ViewState, isFirstPage: Bool) {
-//        switch viewState {
-//        case .idle: print("idle")
-//        case .error(let error): print("error: \(error)")
-//        case .loading: print("loading")
-//        case .loaded(let newCoins):
-//            let startIndex = coins.count
-//            coins.append(contentsOf: newCoins)
-//            
-//            if isFirstPage {
-//                tableView.reloadData()
-//            } else {
-//                let indexPaths = (startIndex..<coins.count).map { IndexPath(row: $0, section: 0) }
-//                tableView.insertRows(at: indexPaths, with: .none)
-//            }
-//        }
-//    }
     
     private func setupTableView() {
-        
-        view.backgroundColor = .white
-        navigationController?.navigationBar.backgroundColor = .white
-        
         view.addSubview(tableView)
         
         NSLayoutConstraint.activate([
@@ -162,8 +141,8 @@ extension ViewController: UITableViewDataSource {
         cell.configure(model: coin)
         
         return cell
-        
     }
+    
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
             let threshold = coins.count - 5 // подгружаем чуть заранее, а не в последней строке
             if indexPath.row >= threshold {

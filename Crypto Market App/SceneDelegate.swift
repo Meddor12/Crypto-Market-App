@@ -13,21 +13,27 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-        // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
-        // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
-        // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
         guard let windowScene = (scene as? UIWindowScene) else { return }
         
         let window = UIWindow(windowScene: windowScene)
         let controller = ViewController()
         let navigationController = UINavigationController(rootViewController: controller)
-        navigationController.navigationBar.barTintColor = .white
-        navigationController.navigationBar.backgroundColor = .white
+        
+        // настраиваем внешний вид бара через Appearance API
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()   // непрозрачный фон
+        appearance.backgroundColor = .white
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.black]
+        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.black]
+        
+        navigationController.navigationBar.standardAppearance = appearance
+        navigationController.navigationBar.scrollEdgeAppearance = appearance   // важно! иначе фон другой при скролле вверх
+        navigationController.navigationBar.compactAppearance = appearance
+        
         controller.title = "Топ 100 монет"
         window.rootViewController = navigationController
         window.makeKeyAndVisible()
         self.window = window
-        
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {
