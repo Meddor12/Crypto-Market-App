@@ -56,7 +56,7 @@ class MainScreenViewModel {
                 do {
                     let coins = try JSONDecoder().decode([Coin].self, from: data)
                     
-                    print("Данные получены успешно")
+                    //print("Данные получены успешно")
                     
                     DispatchQueue.main.async {
                         self.itemCount = coins.count

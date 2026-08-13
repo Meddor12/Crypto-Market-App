@@ -107,21 +107,59 @@ class TableViewCell: UITableViewCell {
         
         priceChange.textColor = (model.priceChangePercentage24h ?? 0) >= 0 ? .systemGreen : .systemRed
         
-        downloadImage(from: model.image)
+        imageCoin.image = nil
+        
+        if let cashedImage = ImageCash.shared.image(for: model.image) {
+            imageCoin.image = cashedImage
+            return
+        }
+        guard let url = URL(string: model.image) else {
+            return
+        }
+        
+        URLSession.shared.dataTask(with: url) { data, _, _ in
+            guard let data = data,
+                  let image = UIImage(data: data) else {
+                return
+            }
+            ImageCash.shared.setImage(image, for: model.image)
+            
+            DispatchQueue.main.async {
+                self.imageCoin.image = image
+            }
+            
+        }.resume()
+        //downloadImage(from: model.image)
     }
     
-    private func downloadImage(from url: String) {
-        guard let url = URL(string: url) else { return }
+//    private func downloadImage(from url: String) {
+//        guard let url = URL(string: url) else { return }
+//        
+//        let request = URLRequest(url: url)
+//        
+//        DispatchQueue.global(qos: .utility).async {
+//            URLSession.shared.dataTask(with: request) { data, _, _ in
+//                guard let data = data, let image = UIImage(data: data) else { return }
+//                
+//                DispatchQueue.main.async { self.imageCoin.image = image }
+//                
+//            }.resume()
+//        }
+//    }
+    
+    final class ImageCash {
         
-        let request = URLRequest(url: url)
+        static let shared = ImageCash()
         
-        DispatchQueue.global(qos: .utility).async {
-            URLSession.shared.dataTask(with: request) { data, _, _ in
-                guard let data = data, let image = UIImage(data: data) else { return }
-                
-                DispatchQueue.main.async { self.imageCoin.image = image }
-                
-            }.resume()
+        private let cash = NSCache<NSString, UIImage>()
+        
+        private init() {}
+        
+        func image(for url: String) -> UIImage? {
+            cash.object(forKey: url as NSString)
+        }
+        func setImage(_ image: UIImage, for url: String) {
+            cash.setObject(image, forKey: url as NSString)
         }
     }
 }
