@@ -105,4 +105,11 @@ extension FavoritesViewController: UITableViewDataSource {
     }
 }
 
-extension FavoritesViewController: UITableViewDelegate {}
+extension FavoritesViewController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        let item = favorites[indexPath.row]
+        let detailVC = DetailViewController(coin: item)
+        self.navigationController?.pushViewController(detailVC, animated: true)
+    }
+}
