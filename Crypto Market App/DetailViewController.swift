@@ -6,12 +6,12 @@
 //
 
 import UIKit
+import CoreData
 
 class DetailViewController: UIViewController {
     
     
     private let coin: Coin
-    
     let backroundView = LabelBackgroundView()
     
     private var imageCoin: UIImageView = {
@@ -69,6 +69,19 @@ class DetailViewController: UIViewController {
         return label
     }()
     
+    private lazy var saveButton: UIButton = {
+          let button = UIButton(type: .system)
+          button.translatesAutoresizingMaskIntoConstraints = false
+          button.setTitle("Сохранить в избранное", for: .normal)
+          button.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
+          button.addTarget(self, action: #selector(saveTapped), for: .touchUpInside)
+          return button
+      }()
+    
+    private var context: NSManagedObjectContext {
+           (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+       }
+    
     init(coin: Coin) {
         self.coin = coin
         super.init(nibName: nil, bundle: nil)
@@ -95,6 +108,30 @@ class DetailViewController: UIViewController {
 
         backroundView.set(titleText: "$\(coin.marketCap?.abbreviated, default: "")")
     }
+    @objc private func saveTapped() {
+            let cdCoin = CDCoins(context: context)
+            cdCoin.id = coin.id
+            cdCoin.symbol = coin.symbol
+            cdCoin.name = coin.name
+            cdCoin.image = coin.image
+            cdCoin.price = "\(coin.currentPrice)"
+            cdCoin.marketCap = coin.marketCap.map { "\($0)" }
+            cdCoin.price_change_percentage_24h = coin.priceChangePercentage24h.map { "\($0)" }
+            
+            do {
+                try context.save()
+                showSavedFeedback()
+            } catch {
+                print("Ошибка сохранения: \(error)")
+            }
+        }
+    private func showSavedFeedback() {
+            let alert = UIAlertController(title: nil, message: "Сохранено в избранное", preferredStyle: .alert)
+            present(alert, animated: true)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                alert.dismiss(animated: true)
+            }
+        }
     
     func setupConstrates() {
         view.addSubview(imageCoin)
@@ -103,6 +140,7 @@ class DetailViewController: UIViewController {
         view.addSubview(price)
         view.addSubview(priceChange)
         view.addSubview(backroundView)
+        view.addSubview(saveButton)
         
         NSLayoutConstraint.activate([
             imageCoin.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 32),
@@ -133,7 +171,10 @@ class DetailViewController: UIViewController {
             backroundView.topAnchor.constraint(equalTo: priceChange.bottomAnchor, constant: 64),
             backroundView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 32),
             backroundView.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -32),
-            backroundView.heightAnchor.constraint(equalToConstant: 100)
+            backroundView.heightAnchor.constraint(equalToConstant: 100),
+            
+            saveButton.topAnchor.constraint(equalTo: backroundView.bottomAnchor, constant: 32),
+            saveButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
         ])
     }

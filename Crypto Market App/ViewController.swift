@@ -18,69 +18,73 @@ class ViewController: UIViewController {
     
     
     private let footerLabel: UILabel = {
-           let label = UILabel()
-           label.textAlignment = .center
-           label.font = .systemFont(ofSize: 14)
-           label.numberOfLines = 2
-           label.isUserInteractionEnabled = true
-           label.frame = CGRect(x: 0, y: 0, width: 0, height: 50)
-           return label
-       }()
+        let label = UILabel()
+        label.textAlignment = .center
+        label.font = .systemFont(ofSize: 14)
+        label.numberOfLines = 2
+        label.isUserInteractionEnabled = true
+        label.frame = CGRect(x: 0, y: 0, width: 0, height: 50)
+        return label
+    }()
     
     private lazy var tableView: UITableView = {
         let view = UITableView()
         view.register(TableViewCell.self, forCellReuseIdentifier: TableViewCell.reuseIdentifier)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.tableFooterView = footerLabel   // ← этого не хватает
-
+        
         return view
     }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupNavigation()
         setupTableView()
         setupRefreshControl()
         
         let tap = UITapGestureRecognizer(target: self, action: #selector(retryTapped))
-                footerLabel.addGestureRecognizer(tap)
+        footerLabel.addGestureRecognizer(tap)
         
         loadFirstPage()
     }
+    
     @objc private func retryTapped() {
-            loadNextPage()
-        }
+        loadNextPage()
+    }
     
     private func handle(_ viewState: ViewState, isFirstPage: Bool) {
-           switch viewState {
-           case .idle:
-               break
-               
-           case .loading:
-               footerLabel.text = "Загрузка..."
-               footerLabel.textColor = .secondaryLabel
-               
-           case .error(let message):
-               footerLabel.text = "\(message)\n(нажми, чтобы повторить)"
-               footerLabel.textColor = .systemRed
-               
-           case .loaded(let newCoins):
-               footerLabel.text = nil
-               let startIndex = coins.count
-               coins.append(contentsOf: newCoins)
-               
-               if isFirstPage {
-                   tableView.reloadData()
-               } else {
-                   let indexPaths = (startIndex..<coins.count).map { IndexPath(row: $0, section: 0) }
-                   tableView.insertRows(at: indexPaths, with: .none)
-               }
-           }
-       }
+        switch viewState {
+        case .idle:
+            break
+            
+        case .loading:
+            footerLabel.text = "Загрузка..."
+            footerLabel.textColor = .secondaryLabel
+            
+        case .error(let message):
+            footerLabel.text = "\(message)\n(нажми, чтобы повторить)"
+            footerLabel.textColor = .systemRed
+            
+        case .loaded(let newCoins):
+            footerLabel.text = nil
+            let startIndex = coins.count
+            coins.append(contentsOf: newCoins)
+            
+            if isFirstPage {
+                tableView.reloadData()
+            } else {
+                let indexPaths = (startIndex..<coins.count).map { IndexPath(row: $0, section: 0) }
+                tableView.insertRows(at: indexPaths, with: .none)
+            }
+        }
+    }
+    
     private func loadFirstPage() {
         viewModel.fetchNextPage { [weak self] viewState in
             self?.handle(viewState, isFirstPage: true)
         }
     }
+    
     private func loadNextPage() {
         viewModel.fetchNextPage { [weak self] viewState in
             self?.handle(viewState, isFirstPage: false)
@@ -96,6 +100,7 @@ class ViewController: UIViewController {
         
         tableView.refreshControl = refreshControl
     }
+    
     @objc private func refreshData() {
         viewModel.reset()
         coins = []
@@ -120,6 +125,26 @@ class ViewController: UIViewController {
         
         tableView.dataSource = self
         tableView.delegate = self
+    }
+    
+    private func setupNavigation() {
+        let favoriteButton = UIButton()
+        
+        favoriteButton.setImage(UIImage(systemName: "star.circle.fill"), for: .normal)
+        
+        favoriteButton.frame = .init(x: 0, y: 0, width: 45, height: 45)
+        
+        favoriteButton.imageView?.contentMode = .scaleAspectFill
+        
+        favoriteButton.addTarget(self, action: #selector(favoriteButtonDidTapped), for: .touchUpInside)
+        
+        navigationItem.rightBarButtonItem = .init(customView: favoriteButton)
+        
+    }
+    
+    @objc private func favoriteButtonDidTapped() {
+        let favoritesVC = FavoritesViewController()
+            navigationController?.pushViewController(favoritesVC, animated: true)
     }
     
 }
